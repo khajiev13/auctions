@@ -1,0 +1,41 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <h2>My watchlist</h2>
+        <div class="card-deck">
+            {% for listing in listings %}
+                {% if listing.active %}
+                    <div class="card" style="max-width: 30rem;">
+                    <img id="image" class="card-img-top img-fluid img-thumbnail" src="{{listing.image_url}}" alt="Image of the listing">
+                    <div class="card-body">
+                        <div class="row flex-column ">
+                            <a href="{% url 'view_listing' listing.id %}" class="h4 card-title text-decoration-none">{{listing.title}}</a>
+                            {% if listing.bids.last.cost_value %}
+                                <h6><del>${{listing.price}}</del> <span class="h3">${{listing.bids.last.cost_value}}</span></h6>
+                            {% else %}
+                                <h3>${{listing.price}}</h3>
+                            {%endif%}
+                        </div>
+                        
+                        <p style="
+                        overflow:hidden; 
+                        text-overflow:ellipsis;
+                        white-space:nowrap; " class="card-text">{{listing.description}}</p>
+                    </div>  
+                    <div class="card-footer">
+                        <small class="text-muted">Announced date: {{listing.timestamp}}</small>
+                    </div>
+                    </div>
+                {% endif %}
+                {%empty%}
+                    <ul>
+                        <li>You don't have any watchlist added!</li>
+                    </ul>
+            {% endfor %}
+        </div>
+    {% else %}
+        <li>Please log in</li>
+    {% endif %}
+    
+{% endblock %}

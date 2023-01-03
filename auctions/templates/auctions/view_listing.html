@@ -1,0 +1,162 @@
+{% extends "auctions/layout.html" %}
+
+
+{% block body %}
+    {% if message %}
+        <!-- Button trigger modal -->
+        <button id="button_trigger" type="button" class="d-none btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">
+            This button is invisible but gets clicked automatically
+        </button>
+        
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Message</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                </div>
+                <div class="modal-body">
+                {{message}}
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Display a message if the item has been sold -->
+    {% if not listing.active %}
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">Auction has been closed!</h4>
+            <p>The item has been sold to {{listing.winner}}</p>
+            <hr>
+            <p class="mb-0">Click <a href="{% url 'index' %}">here</a> to see other active auctions. Thank you!</p>
+        </div>
+    {% endif %}
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-8 col-md-12">
+                <div class="card">
+                    <h4 class="card-header">{{listing.title}}</h4>
+                    <div class="card-body">
+                        <img src="{{listing.image_url}}" alt="Image of the listing" class="img-fluid">
+                        {% if bids.last.cost_value %}
+                        <h6><del>${{listing.price}}</del> <span class="h3">${{bids.last.cost_value}}</span></h6>
+                        {% else %}
+                        <h3>${{listing.price}}</h3>
+                        {%endif%}
+                        
+                        <p class="fw-bolder">{{listing.description}}</p>
+                    </div>
+                </div>
+                <div class="card mt-3">
+                    <h4 class="card-header">Comments</h4>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {%for comment in comments %}
+                            <div href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                              <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{comment.user_id.get_full_name}}</h5>
+                                <small>{{comment.timestamp}}</small>
+                              </div>
+                              <p class="mb-1">{{comment.text}}</p>
+                            </div>
+                            {% empty %}
+                                <h6>No comments</h6>
+                            {%endfor%}
+                          </div>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 ">
+                <div class="card sticky-lg-top">
+                    <h4 class="card-header">Details</h4>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                {% if listing.id in watchlist %}
+                                    <form action="" method="post">
+                                        {%csrf_token%}
+                                        <button name="watchlist" value="{{listing.id}}" class="btn btn-danger">Remove from watchlist</button>
+                                    </form>
+                                {% else %}
+                                    <form action="" method="post">
+                                        {%csrf_token%}
+                                        <button name="watchlist" value="{{listing.id}}" class="btn btn-success">Add to watchlist</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                            <div class="col-6">
+                                {% if listing.user_id.id == user.id %}
+                                    {% if listing.active %}
+                                        <form action="" method="post">
+                                            {%csrf_token%}
+                                            <button name="closed" value="1" type="submit" class="btn btn-warning">Close the auction</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <ul class="mt-3">
+                            <li>Listed by: {{listing.user_id.get_full_name}}</li>
+                            <li>Category: {%for category in categories%}<span class="mr-1 badge badge-primary">{{category}}</span>{%endfor%}</li>
+                        </ul>             
+                    </div>
+                    <ul class="list-group card ">
+                        <h5 class="card-header">Bids</h5>
+                        {%for bid in bids%}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                           <mark>{{bid.user_id.get_full_name}}</mark>
+                           <div class="comment-timestamp">{{bid.timestamp}}</div>
+                            <span class="badge badge-primary badge-pill bg-primary">{{bid.cost_value}}</span>
+                            </li>
+                            {% empty %}
+                            No bids so far
+                        {%endfor%}
+                        {% if listing.user_id.id is not user.id %}
+                        <form method="post" action="" class="mt-2 mb-0">
+                            {% csrf_token %}
+                            <h6 class="form-label" for="formControlRange">Wanna place a higher bid?</h6>
+                            <div class="mb-2 input-group">
+                                <input type="range" 
+                                class="mb-2 form-control-range" 
+                                min="{% if bids.last.cost_value %}{{bids.last.cost_value}}{%else%}{{listing.price}}{%endif%}" 
+                                max="{% if bids.last.cost_value %}{%widthratio bids.last.cost_value 1 2%}{%else%}{%widthratio listing.price 1 2%}{%endif%}"
+                                id="formControlRange" 
+                                onChange="document.getElementById('rangeval').value = document.getElementById('formControlRange').value">
+                                <div class="input-group-text">$</div>
+                                <input class="form-control" type="number" name="new_bid" id="rangeval" value="{{bids.last.cost_value}}">
+                                <div class="mr-5 input-group-text">.00</div>
+                                <button class="btn btn-primary" type="submit">Place a bid</button>
+                                <!-- <label class="form-label" for="rangeval">Enter the amount</label> -->
+                            </div>
+                        </form>
+                        {% endif %}
+                      </ul>
+                    <div class="card mt-3 mt-3">
+                        <h4 class="card-header">Leave a comment</h4>
+                        <div class="card-body">
+                            <form method="post" action="">
+                                {% csrf_token %}
+                                <div class="form-floating">
+                                    <textarea name="comment" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2" style="height: 150px"></textarea>
+                                    <label for="floatingTextarea2">Leave a comment</label>
+                                </div>
+                                <button class="mt-1 btn btn-primary" type="submit">Comment</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+{% endblock %}
