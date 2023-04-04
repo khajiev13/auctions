@@ -23,18 +23,7 @@ python manage.py runserver
 Once the server is running, open your web browser and navigate to 
 ``` http://localhost:8000/```. 
 You should see the homepage, which displays a list of all active auctions. From there, you can create a new account, login, and start bidding on auctions.
-```python
-import foobar
 
-# returns 'words'
-foobar.pluralize('word')
-
-# returns 'geese'
-foobar.pluralize('goose')
-
-# returns 'phenomenon'
-foobar.singularize('phenomena')
-```
 
 ## Contributing
 
